@@ -5,6 +5,13 @@ import { handleOCR } from '../controllers/ocrController'
 
 const router=express.Router();
 
-router.post('/',upload.array('images',2),handleOCR)
 
+
+router.post('/',
+    upload.fields([
+        {name:'front',maxCount:1},
+        {name:'back',maxCount:1}
+    ]),
+    handleOCR
+)
 export default router;
