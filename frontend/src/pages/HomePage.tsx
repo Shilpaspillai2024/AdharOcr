@@ -1,4 +1,4 @@
-import React from "react";
+
 import OcrUploader from "../components/OcrUploader";
 
 const HomePage=()=>{
