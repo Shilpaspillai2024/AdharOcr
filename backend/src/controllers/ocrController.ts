@@ -1,21 +1,48 @@
-import { Request,Response } from "express";
-import { performOCR } from "../services/ocrService";
+import { Request, Response } from "express";
+import { performOCR } from "../utils/ocrService";
+interface MulterFiles {
+    frontImage?: Express.Multer.File[];
+    backImage?: Express.Multer.File[];
+}
 
-export const handleOCR=async(req:Request,res:Response)=>{
+
+
+
+export const handleOCR = async (req: Request, res: Response): Promise<void> => {
+    let frontImagePath: string | undefined;
+    let backImagePath: string | undefined;
+
     try {
+        const files = req.files as MulterFiles;
 
-        const fileObj=req.files as { [fieldname:string]:Express.Multer.File[]};
-       
-        const files:Express.Multer.File[]=[]
+        if (!files || !files.frontImage) {
+            res.status(400).json({
+                status: false,
+                message: 'Front image is required'
+            });
+            return;
+        }
 
-        if(fileObj.front) files.push(fileObj.front[0])
-        if(fileObj.back) files.push(fileObj.back[0])
+        frontImagePath = files.frontImage[0].path;
+        backImagePath = files.backImage?.[0]?.path;
+
+        console.log('Processing images:', { frontImagePath, backImagePath });
         
-        const results=await performOCR(files)
-        res.json({data:results})
-        
+        const extractedData = await performOCR(frontImagePath, backImagePath);
+        console.log("extractedData",extractedData)
+
+        res.json({
+            status: true,
+            data: extractedData,
+            message: "Parsing Successfully"
+        });
+
     } catch (error) {
-        res.status(500).json({message:'OCR failed',error})
+        console.error('OCR processing error:', error);
+        res.status(500).json({
+            status: false,
+            data: null,
+            message: 'Failed to process Aadhaar card'
+        });
     }
 };
-

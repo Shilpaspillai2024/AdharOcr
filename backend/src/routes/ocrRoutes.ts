@@ -1,5 +1,5 @@
 import express from 'express'
-import upload from '../utils/fileUpload'
+import upload from '../middleware/fileUpload'
 import { handleOCR } from '../controllers/ocrController'
 
 
@@ -7,11 +7,9 @@ const router=express.Router();
 
 
 
-router.post('/',
+router.post('/process',
     upload.fields([
-        {name:'front',maxCount:1},
-        {name:'back',maxCount:1}
-    ]),
-    handleOCR
-)
+        {name:'frontImage',maxCount:1},
+        {name:'backImage',maxCount:1}
+    ]),handleOCR);
 export default router;
