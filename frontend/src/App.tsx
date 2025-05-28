@@ -72,85 +72,91 @@ const App:React.FC=()=>{
   return (
     <>
    
-    <div className="app">
-      <div className="container">
-        {!showResults ? (
-          <div className="upload-section">
-            <h1 className="section-label">(a)</h1>
-            
-            <div className="upload-grid">
-              <div className="upload-area">
-                <ImageUpload
-                  label="Aadhaar Front"
-                  onImageSelect={handleFrontImageSelect}
-                  preview={frontPreview}
-                  isRequired={true}
-                />
-              </div>
-              
-              <div className="api-response-preview">
-                <h3>API Response</h3>
-                <div className="response-box">
-                  <p>Start Performing OCR by inputting your Aadhaar front and back</p>
-                </div>
-              </div>
-            </div>
+   <div className="min-h-screen bg-gray-100 py-10">
+  <h1 className="text-2xl font-bold text-center mb-6">Aadhaar OCR</h1>
 
-            <div className="upload-area">
-              <ImageUpload
-                label="Aadhaar Back"
-                onImageSelect={handleBackImageSelect}
-                preview={backPreview}
-                isRequired={false}
-              />
-            </div>
+  <div className="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow">
+    {!showResults ? (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+       
+        <div className="flex flex-col space-y-6">
+          <ImageUpload
+            label="Aadhaar Front"
+            onImageSelect={handleFrontImageSelect}
+            preview={frontPreview}
+            isRequired={true}
+          />
+          <ImageUpload
+            label="Aadhaar Back"
+            onImageSelect={handleBackImageSelect}
+            preview={backPreview}
+            isRequired={false}
+          />
+          <button
+            className="mt-4 w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:bg-blue-300"
+            onClick={handleParseAadhaar}
+            disabled={isProcessing || !frontImage}
+          >
+            {isProcessing ? 'PROCESSING...' : 'PARSE AADHAAR'}
+          </button>
+        </div>
 
-            <button 
-              className="parse-button"
-              onClick={handleParseAadhaar}
-              disabled={isProcessing || !frontImage}
-            >
-              {isProcessing ? 'PROCESSING...' : 'PARSE AADHAAR'}
-            </button>
-          </div>
-        ) : (
-          <div className="results-section">
-            <div className="results-grid">
-              <div className="images-section">
-                <div className="image-preview">
-                  <h4>Aadhaar Front</h4>
-                  {frontPreview && (
-                    <img src={frontPreview} alt="Aadhaar Front" className="preview-image" />
-                  )}
-                  <p className="capture-text">Press to re-capture/Upload</p>
-                </div>
-                
-                {backPreview && (
-                  <div className="image-preview">
-                    <h4>Aadhaar Back</h4>
-                    <img src={backPreview} alt="Aadhaar Back" className="preview-image" />
-                    <p className="capture-text">Press to re-capture/Upload</p>
-                  </div>
-                )}
-
-                <button 
-                  className="parse-button"
-                  onClick={resetForm}
-                >
-                  UPLOAD NEW IMAGES
-                </button>
-              </div>
-
-              <div className="data-section">
-                {parsedData && <ParsedData data={parsedData} />}
-                {apiResponse && <ApiResponseData response={apiResponse} />}
-              </div>
-            </div>
-          </div>
-        )}
+       
+        <div className="flex flex-col justify-center items-center bg-gray-50 p-6 rounded border border-gray-300">
+          <h3 className="text-lg font-semibold mb-4">API Response</h3>
+          <p className="text-gray-600 text-center">
+            Start Performing OCR by uploading your Aadhaar front and back images.
+          </p>
+        </div>
       </div>
-    </div>
+    ) : (
       
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+       
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-lg font-semibold mb-2">Aadhaar Front</h4>
+            {frontPreview && (
+              <img
+                src={frontPreview}
+                alt="Aadhaar Front"
+                className="w-full rounded shadow"
+              />
+            )}
+            <p className="text-gray-600 text-sm mt-1 cursor-pointer" onClick={resetForm}>
+              Press to re-capture/Upload
+            </p>
+          </div>
+          {backPreview && (
+            <div>
+              <h4 className="text-lg font-semibold mb-2">Aadhaar Back</h4>
+              <img
+                src={backPreview}
+                alt="Aadhaar Back"
+                className="w-full rounded shadow"
+              />
+              <p className="text-gray-600 text-sm mt-1 cursor-pointer" onClick={resetForm}>
+                Press to re-capture/Upload
+              </p>
+            </div>
+          )}
+          <button
+            className="mt-4 w-full bg-gray-600 text-white py-3 rounded hover:bg-gray-700"
+            onClick={resetForm}
+          >
+            UPLOAD NEW IMAGES
+          </button>
+        </div>
+        <div className="space-y-6">
+          {parsedData && <ParsedData data={parsedData} />}
+          {apiResponse && <ApiResponseData response={apiResponse} />}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+
     </>
   )
 };

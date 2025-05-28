@@ -25,14 +25,13 @@ const ApiResponseData:React.FC<ApiResponseProps>=({response})=>{
     return JSON.stringify(formattedData,null,2)
 }
 return(
-    <div className="api-response">
-      <h3>API Response</h3>
-      <div className={`response-container ${response.status ? 'success' : 'error'}`}>
-        <pre className="json-response">
-          {formatJsonResponse()}
-        </pre>
-      </div>
-      </div>
+   <div className="bg-white p-4 rounded-lg shadow max-w-md mx-auto">
+  <h3 className="text-xl font-semibold mb-4">API Response</h3>
+  <div className={`rounded p-4 whitespace-pre-wrap overflow-auto text-sm font-mono ${response.status ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+    {formatJsonResponse()}
+  </div>
+</div>
+
 )
 }
 export default ApiResponseData

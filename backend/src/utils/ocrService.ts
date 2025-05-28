@@ -17,11 +17,12 @@ const preprocessImage = async (imagePath: string): Promise<string> => {
     try {
         const processedPath = imagePath.replace(/\.(jpg|jpeg|png|gif)$/i, '_processed.png')
         await sharp(imagePath)
-            .grayscale()
             .resize(2000, null, { withoutEnlargement: true }) 
+            .grayscale()
             .normalize()
-            .sharpen({ sigma: 1, m1: 0.5, m2: 2, x1: 2, y2: 10, y3: 20 })
-            .linear(1.2, -(128 * 1.2) + 128)
+            .sharpen()
+            .modulate({ brightness: 1.1})
+            .linear(1.2, -30)
             .png({ quality: 100 })
             .toFile(processedPath)
         return processedPath
@@ -32,21 +33,12 @@ const preprocessImage = async (imagePath: string): Promise<string> => {
 };
 
 const extractAadhaarNumber = (text: string) => {
-    
-    const patterns = [
-        /\b\d{4}\s?\d{4}\s?\d{4}\b/g,
-        /\b\d{12}\b/g
-    ];
-    
-    for (const pattern of patterns) {
-        const matches = text.match(pattern);
-        if (matches) {
-           
-            for (const match of matches) {
-                const cleaned = match.replace(/\s/g, '');
-                if (cleaned.length === 12 && !cleaned.startsWith('0')) {
-                    return cleaned;
-                }
+    const matches=text.match(/\d{4}[\s\-]?\d{4}[\s\-]?\d{4}/g);
+    if(matches){
+        for(const match of matches){
+            const cleaned=match.replace(/\D/g,'');
+            if(cleaned.length ===12 && /^[2-9]\d{11}$/.test(cleaned)){
+                return cleaned
             }
         }
     }
@@ -128,81 +120,33 @@ const extractGender = (text: string): string | undefined => {
     return undefined;
 };
 
+
+
 const extractName = (text: string): string | undefined => {
-    const lines = text.split('\n').filter(line => line.trim().length > 0);
-    
-   
-    for (const line of lines) {
-        const cleanLine = line.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-        
-       
-        const namePattern = /\b([A-Z][a-z]{2,}\s+(?:[A-Z]\.?\s+)?[A-Z][a-z]{2,})\b/;
-        const match = cleanLine.match(namePattern);
-        
-        if (match) {
-            const potentialName = match[1];
-           
-            if (!potentialName.match(/\b(GOVERNMENT|INDIA|AADHAAR|UNIQUE|IDENTIFICATION|AUTHORITY|ADDRESS|MALE|FEMALE)\b/i)) {
-                return potentialName;
-            }
-        }
-    }
-    
-  
-    for (const line of lines) {
-       
-        const cleaned = line
-            .replace(/^[^A-Za-z]*/, '') 
-            .replace(/[^A-Za-z\s]*$/, '') 
-            .replace(/\s+/g, ' ')
-            .trim();
-        
-       
-        const words = cleaned.split(' ').filter(word => 
-            /^[A-Z][a-z]{1,15}$/.test(word) && 
-            word.length > 1 &&
-            !/(GOVERNMENT|INDIA|AADHAAR|UNIQUE|MALE|FEMALE|ADDRESS|DOB)/i.test(word)
-        );
-        
-      
-        if (words.length >= 2 && words.length <= 4) {
-            const possibleName = words.join(' ');
-            
-            if (possibleName.length >= 5 && possibleName.length <= 50) {
-                return possibleName;
-            }
-        }
-    }
-    
-   
-    const textLines = text.split('\n');
-    for (let i = 0; i < textLines.length; i++) {
-        const line = textLines[i];
-        
-      
-        if (/DOB|MALE|FEMALE|Ferale/i.test(line) || 
-            (i < textLines.length - 1 && /DOB|MALE|FEMALE|Ferale/i.test(textLines[i + 1]))) {
-            
-           
-            const linesToCheck = [textLines[i - 1], textLines[i]].filter(Boolean);
-            
-            for (const checkLine of linesToCheck) {
-                const cleanLine = checkLine.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
-                const words = cleanLine.split(' ').filter(word => 
-                    /^[A-Z][a-z]+$/.test(word) && 
-                    word.length > 2 &&
-                    !/(DOB|MALE|FEMALE|GOVERNMENT|INDIA|AADHAAR)/i.test(word)
-                );
-                
-                if (words.length >= 2 && words.length <= 3) {
-                    return words.join(' ');
+    const lines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && /[A-Za-z]/.test(line));
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (/DOB|Date of Birth|Year of Birth|Male|Female/i.test(line)) {
+            for (let j = i - 2; j <= i; j++) {
+                if (j >= 0 && lines[j]) {
+                    const cleaned = lines[j].replace(/[^A-Za-z\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                    if (cleaned && /^[A-Z][a-zA-Z\s]{2,40}$/.test(cleaned) &&
+                        !/India|Government|Aadhaar/i.test(cleaned)) {
+                        return cleaned;
+                    }
                 }
             }
+            break;
         }
     }
-    
+
     return undefined;
 };
+
+
 
 const extractAddress = (text: string): string => {
     const lines = text.split('\n').filter(line => line.trim().length > 0);
@@ -274,13 +218,14 @@ export const performOCR = async (frontImagePath: string, backImagePath?: string)
         
         // Set parameters for better OCR
         await worker.setParameters({
-            tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+            tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
+            tessedit_pageseg_mode: Tesseract.PSM.AUTO, 
             tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.,: -'
         });
         
         const frontResult = await worker.recognize(processedFrontPath);
         const frontText = frontResult.data.text;
-        console.log("Front text:", frontText);
+        console.log("Front text:   ", frontText);
 
         let backText = '';
         if (backImagePath) {
@@ -292,7 +237,7 @@ export const performOCR = async (frontImagePath: string, backImagePath?: string)
         await worker.terminate();
 
         const combinedText = frontText + ' ' + backText;
-        console.log("Combined text:", combinedText);
+        console.log("Combined text:  ", combinedText);
 
        
         const name = extractName(frontText);
