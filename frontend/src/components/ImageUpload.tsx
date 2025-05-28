@@ -62,6 +62,14 @@ const ImageUpload:React.FC<ImageUploadProps>=({
           </div>
         )}
       </div>
+
+
+      {preview &&(
+        <p className="text-sm text-gray-500 mt-2 text-center cursor-pointer hover:text-blue-600"
+          onClick={handleClick}>
+            Press to recapture /Upload
+          </p>
+      )}
       <input
         ref={fileInputRef}
         type="file"

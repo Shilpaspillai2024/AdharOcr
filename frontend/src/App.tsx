@@ -17,17 +17,24 @@ const App:React.FC=()=>{
   const [apiResponse, setApiResponse] = useState<ApiResponseType | null>(null);
   const [showResults, setShowResults] = useState(false);
 
-  const handleFrontImageSelect=(file:File)=>{
-    setFrontImage(file)
-    const preview=URL.createObjectURL(file)
-    setFrontPreview(preview)
+  const handleFrontImageSelect = (file: File) => {
+  if (backImage && file.name === backImage.name && file.lastModified === backImage.lastModified) {
+    alert("This image has already been uploaded as the Aadhaar back side. Please choose a different image.");
+    return;
   }
+  setFrontImage(file);
+  setFrontPreview(URL.createObjectURL(file));
+};
 
-  const handleBackImageSelect = (file: File) => {
-    setBackImage(file);
-    const preview = URL.createObjectURL(file);
-    setBackPreview(preview);
-  };
+const handleBackImageSelect = (file: File) => {
+  if (frontImage && file.name === frontImage.name && file.lastModified === frontImage.lastModified) {
+    alert("This image has already been uploaded as the Aadhaar front side. Please choose a different image.");
+    return;
+  }
+  setBackImage(file);
+  setBackPreview(URL.createObjectURL(file));
+};
+
 
   const handleParseAadhaar = async () => {
     if (!frontImage) {
@@ -120,7 +127,7 @@ const App:React.FC=()=>{
               <img
                 src={frontPreview}
                 alt="Aadhaar Front"
-                className="w-full rounded shadow"
+                className="w-64 h-auto rounded shadow object-contain"
               />
             )}
             <p className="text-gray-600 text-sm mt-1 cursor-pointer" onClick={resetForm}>
@@ -133,7 +140,7 @@ const App:React.FC=()=>{
               <img
                 src={backPreview}
                 alt="Aadhaar Back"
-                className="w-full rounded shadow"
+                className="w-64 h-auto rounded shadow object-contain"
               />
               <p className="text-gray-600 text-sm mt-1 cursor-pointer" onClick={resetForm}>
                 Press to re-capture/Upload
